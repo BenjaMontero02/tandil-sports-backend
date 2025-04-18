@@ -1,0 +1,169 @@
+Actividad
+crear, eliminar, editar, obtener todas, obtener por id
+
+informacion de salud
+crear, eliminar, editar, obtener todas, obtener por id
+
+Cliente /clients
+crear, eliminar, editar, obtener todas paginado, obtener por id
+crear pdf por cliente id
+crear clientes por excel
+
+User
+id, email, pw
+
+export interface Client {
+  firstName: string;
+  lastName: string;
+  dni: string;
+  age: number;
+  gender: string;
+  email: string;
+  phone: string;
+  birthDate: Date;
+  creationDate: Date;
+  isActive: boolean;
+  photo: string;
+  activities: Activity[]; // Relationship with Activity
+  healthData: HealthData; // Relationship with HealthData
+  isInsured: boolean;
+}
+
+export interface Activity {
+  activityName: string;
+  attendedLocation: string;
+  attendedDays: string;
+  goal: string;
+  creationDate: Date;
+  clientId: string; // Relationship with Client
+}
+
+export interface HealthData {
+  clientId: string; // Relationship with Client
+  healthInsurance: string;
+  weight: number;
+  height: number;
+  currentStudies: string;
+  studyImages: string[]; // Path or URL of the image (optional)
+  bloodPressure: string;
+  diseases: string; // List of diseases (optional)
+  medications: string; // List of medications (optional)
+  boneIssues: string; // List of bone issues (optional)
+  smoker: boolean;
+}
+
+@Injectable()
+export class LevelRepository implements CrudInterface<LevelEntity> {
+    
+    constructor(@InjectRepository(LevelEntity) private readonly nivelRepository: Repository<LevelEntity>) { }
+
+    async save(entity: LevelEntity): Promise<LevelEntity> {
+       return await this.nivelRepository.save(entity)
+    }
+
+    async delete(ids: UUID[]): Promise<void> {
+        await this.nivelRepository.delete(ids)
+    }
+    async getById(id: UUID): Promise<LevelEntity | null> {
+        return await this.nivelRepository.findOne({ where: { id: id } })
+    }
+    async getAll(): Promise<LevelEntity[]> {
+        return await this.nivelRepository.find()
+    }
+
+    async existByName(name: string) {
+        return await this.nivelRepository.existsBy({ name: name })
+    }
+
+
+}
+
+import { UUID } from "crypto";
+import { Entity, PrimaryColumn, Column, ManyToOne, Double, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { CategoryEntity } from "../categoria/categoria.entity";
+import { ClubEntity } from "../club/club.entity";
+import { LevelEntity } from "../nivel/level.entity";
+
+export enum Genre {
+    MALE = "Masculino",
+    FEMALE = "Femenino",
+}
+
+@Entity("gymnast")
+export class GymnastEntity {
+
+    @PrimaryGeneratedColumn()
+    id: UUID;
+
+    @Column('varchar', { nullable: false })
+    full_name: string;
+
+    @ManyToOne(() => CategoryEntity)
+    category: CategoryEntity;
+
+    @ManyToOne(() => ClubEntity)
+    club: ClubEntity;
+
+    @ManyToOne(() => LevelEntity)
+    level: LevelEntity;
+
+    @Column('decimal', { default: 0.0 })
+    jump: Double;
+
+    @Column('decimal', { default: 0.0 })
+    parallel: Double;
+
+    @Column('decimal', { default: 0.0 })
+    beam: Double;
+
+    @Column('decimal', { default: 0.0 })
+    ground: Double;
+
+    @Column({
+        type: "enum",
+        enum: Genre,
+        nullable: false
+    })
+    genre: Genre;
+
+}
+
+//repositories
+const repositories = [ClubRepository, CategoryRepository, LevelRepository, GymnastRepository];
+
+//entities
+const entities = [ClubEntity, CategoryEntity, LevelEntity, GymnastEntity];
+
+@Module({
+    imports: [
+        TypeOrmModule.forFeature(entities)
+    ],
+    providers: repositories,
+    exports: repositories,
+})
+export class DataModule { }
+
+const services = [
+    ClubService,
+];
+
+@Module({
+    providers: services,
+    exports: services,
+    imports: [
+        DataModule
+    ]
+})
+export class ServiceModule { }
+
+const controllers = [ClubController];
+
+
+@Module({
+    controllers: controllers,
+    imports: [
+        DataModule,
+        ServiceModule
+    ]
+})
+export class ControllerModule { }
