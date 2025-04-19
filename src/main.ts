@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import * as bodyParser from 'body-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { enviroment } from 'enviroment';
+import { ExceptionsHandler } from './exceptions/exception.filter';
 //cargo variables del environment en la aplicacion
 dotenv.config();
 
@@ -28,9 +29,11 @@ async function bootstrap() {
     { transform: true,
       whitelist: true, 
       forbidNonWhitelisted: true,
-      
     }
   ));
+
+  app.useGlobalFilters(new ExceptionsHandler());
+
   await app.listen(enviroment.APP_PORT);
 }
 bootstrap();

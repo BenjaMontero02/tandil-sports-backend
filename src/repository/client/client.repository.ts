@@ -21,17 +21,18 @@ export class ClientRepository implements CrudRepository<ClientEntity> {
         return await this.repository.find({ relations: ["activities", "healthData"] });
     }
 
-    async update(id: string, item: ClientEntity): Promise<ClientEntity | null> {
+    async update(id: string, item: ClientEntity): Promise<ClientEntity> {
         const existingClient = await this.repository.findOne({ where: { id } });
-        if (!existingClient) {
-            return null;
-        }
-        const updatedClient = Object.assign(existingClient, item);
+        const updatedClient = Object.assign(existingClient!, item);
         return await this.repository.save(updatedClient);
     }
 
     async delete(id: string): Promise<boolean> {
         const result = await this.repository.delete(id);
         return result.affected !== 0;
+    }
+
+    async existsClientByDni(dni: string): Promise<boolean> {
+        return await this.repository.existsBy({dni});
     }
 }
