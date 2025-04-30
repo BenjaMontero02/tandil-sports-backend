@@ -9,8 +9,11 @@ export class ClientEntity {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
-    @Column('varchar', { nullable: false, name: "first_name" })
-    firstName: string;
+    @Column('varchar', { nullable: false, name: "name" })
+    name: string;
+    
+    @Column('varchar', { nullable: false, name: "last_name" })
+    lastName: string;
 
     @Column('varchar', { nullable: false })
     dni: string;
@@ -27,6 +30,9 @@ export class ClientEntity {
     @Column('varchar', { nullable: false })
     phone: string;
 
+    @Column('varchar', { nullable: true })
+    photo: string;
+
     @Column('varchar', { nullable: false, name: "birth_date" })
     birthDate: string;
 
@@ -39,10 +45,10 @@ export class ClientEntity {
     @Column('boolean', { nullable: false, name: "is_insured" })
     isInsured: boolean;
 
-    @OneToMany(() => ActivityEntity, (activity) => activity.client, { cascade: true })
+    @OneToMany(() => ActivityEntity, (activity) => activity.client, { cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     activities: ActivityEntity[];
 
-    @OneToOne(() => HealthDataEntity, (health_data) => health_data.client, { cascade: true })
+    @OneToOne(() => HealthDataEntity, (health_data) => health_data.client, { cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE'  })
     healthData: HealthDataEntity;
 
 }

@@ -4,6 +4,7 @@ import {
     ArgumentsHost,
     HttpStatus,
     BadRequestException,
+    NotFoundException,
   } from '@nestjs/common';
   import { Request, Response } from 'express';
 import { ServerErrorException } from './exceptions';
@@ -22,6 +23,9 @@ import { ServerErrorException } from './exceptions';
         status = exception.getStatus();
         message = exception.message;
       }else if (exception instanceof ServerErrorException) {
+        status = exception.getStatus();
+        message = exception.message;
+      }else if (exception instanceof NotFoundException) {
         status = exception.getStatus();
         message = exception.message;
       }

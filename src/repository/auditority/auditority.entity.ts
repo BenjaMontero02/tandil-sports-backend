@@ -13,6 +13,6 @@ export class AuditorityEntity {
     @Column('varchar', { nullable: false})
     description: string;
 
-    @CreateDateColumn({ type: 'timestamp with local time zone', name: 'creation_date' })
+    @CreateDateColumn({ type: 'timestamp', name: 'creation_date' })
     creationDate: Date;
 }
