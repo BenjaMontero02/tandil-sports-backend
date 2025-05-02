@@ -17,6 +17,7 @@ import {
   Pagination,
   IPaginationOptions,
 } from 'nestjs-typeorm-paginate';
+import { splitUrls } from 'src/util/utils';
 
 @Injectable()
 export class ClientService {
@@ -78,12 +79,14 @@ export class ClientService {
     return client;
   }
 
-  async getAllClients(page: number): Promise<Pagination<ClientEntity>> {
+  async getAllClients(page: number, search?: string): Promise<Pagination<ClientEntity>> {
     try {
-      return await this.clientRepository.getAll({
+      let value = await this.clientRepository.getAll({
         page: page,
         limit: 20,
-      });
+      }, search);
+      this.logger.log('value', value);
+      return value
     } catch (error) {
       await this.auditorityRepository.create(
         'Error al obtener todos los clientes',
@@ -107,10 +110,10 @@ export class ClientService {
     }
   }
 
-  async deleteClient(id: string): Promise<boolean> {
-    let isDeleted: boolean
+  async deleteClient(ids: string[]): Promise<boolean> {
+    let isDeleted: boolean;
     try {
-      isDeleted = await this.clientRepository.delete(id);
+      isDeleted = await this.clientRepository.delete(ids);
     } catch (error) {
       await this.auditorityRepository.create(
         'Error al eliminar el cliente',
@@ -120,13 +123,15 @@ export class ClientService {
     }
 
     if (!isDeleted) {
-      throw new NotFoundException(MessagesErrors.CLIENT_NOT_FOUND);
+      throw new NotFoundException(
+        'No se pudo eliminar los clientes seleccionados',
+      );
     }
 
     return isDeleted;
   }
 
-  async createsClientsWithExcel(data: any[]) {
+  async createsClientsWithExcel(data: any[]): Promise<void> {
     for (const clientToInsert of data) {
       const dni = this.getValueOfRow(clientToInsert['3. DNI']);
       const existClient = await this.existsClientByDni(dni);
@@ -186,13 +191,11 @@ export class ClientService {
           clientToInsert['22. Problemas a nivel oseo, articular o muscular?'],
         );
         healthData.smoker = clientToInsert['21. Fuma?'] === 'si' ? true : false;
-        healthData.studyImages =
-          clientToInsert['17. Informe de Estudios'] == 'No Answer'
-            ? []
-            : clientToInsert['17. Informe de Estudios'];
-        client.healthData = healthData;
 
-        //this.logger.log(`[CLIENTE] ${JSON.stringify(client)}`);
+        healthData.studyImages = splitUrls(
+          clientToInsert['17. Informe de Estudios'],
+        );
+        client.healthData = healthData;
         await this.createClient(client);
       }
     }

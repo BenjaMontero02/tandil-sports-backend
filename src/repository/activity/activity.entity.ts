@@ -22,7 +22,7 @@ export class ActivityEntity {
     @CreateDateColumn({ type: 'timestamp', name: 'creation_date' })
     creationDate: Date;
 
-    @ManyToOne(() => ClientEntity, (client) => client.activities, { nullable: false})
+    @ManyToOne(() => ClientEntity, (client) => client.activities, { nullable: false, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: "client_id" }) // Vinculamos la clave primaria con la columna "client_id"
     client: ClientEntity;
 }

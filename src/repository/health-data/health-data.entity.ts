@@ -8,7 +8,7 @@ export class HealthDataEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
     
-    @OneToOne(() => ClientEntity)
+    @OneToOne(() => ClientEntity, {nullable: false, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'client_id' })
     client: ClientEntity;
 

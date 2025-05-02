@@ -45,10 +45,10 @@ export class ClientEntity {
     @Column('boolean', { nullable: false, name: "is_insured" })
     isInsured: boolean;
 
-    @OneToMany(() => ActivityEntity, (activity) => activity.client, { cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+    @OneToMany(() => ActivityEntity, (activity) => activity.client, {cascade: true})
     activities: ActivityEntity[];
 
-    @OneToOne(() => HealthDataEntity, (health_data) => health_data.client, { cascade: true, onDelete: 'CASCADE', onUpdate: 'CASCADE'  })
+    @OneToOne(() => HealthDataEntity, (health_data) => health_data.client,  {cascade: true})
     healthData: HealthDataEntity;
 
 }

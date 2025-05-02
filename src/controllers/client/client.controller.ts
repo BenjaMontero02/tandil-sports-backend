@@ -27,17 +27,20 @@ export class ClientController {
   constructor(private readonly clientService: ClientService) {}
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   async getById(@Param('id') id: string): Promise<ClientEntity | null> {
     // await new Promise((resolve) => setTimeout(resolve, 3000)); // Simular un retraso de 1 segundo
     return await this.clientService.getClientById(id);
   }
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   async getAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('search') search?: string,
   ): Promise<Pagination<ClientEntity>> {
     // await new Promise((resolve) => setTimeout(resolve, 3000)); // Simular un retraso de 1 segundo
-    return await this.clientService.getAllClients(page);
+    return await this.clientService.getAllClients(page, search);
   }
 
   @Post()
@@ -47,6 +50,7 @@ export class ClientController {
   }
 
   @Put(':id')
+  @HttpCode(HttpStatus.OK)
   async update(
     @Param('id') id: string,
     @Body() client: ClientEntity,
@@ -54,21 +58,21 @@ export class ClientController {
     return await this.clientService.updateClient(id, client);
   }
 
-  @Delete(':id')
+  @Delete()
   @HttpCode(HttpStatus.OK)
-  async delete(@Param('id') id: string): Promise<void> {
-    await this.clientService.deleteClient(id);
+  async delete(@Body('ids') ids: string[]): Promise<void> {
+    await this.clientService.deleteClient(ids);
   }
 
   @Post('excel')
   @UseInterceptors(FileInterceptor('file'))
   @Bind(UploadedFile())
+  @HttpCode(HttpStatus.CREATED)
   async uploadExcel(file: Express.Multer.File) {
     const workbook = XLSX.read(file.buffer, { type: 'buffer' }); // leer desde el buffer recibido
     const sheetName = workbook.SheetNames[0]; // primer hoja
     const sheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(sheet); // transformar a JSON
-    this.clientService.createsClientsWithExcel(data);
-    return data; // devolver los datos
+    return this.clientService.createsClientsWithExcel(data);
   }
 }
