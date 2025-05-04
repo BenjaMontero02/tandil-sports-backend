@@ -18,6 +18,11 @@ import {
   IPaginationOptions,
 } from 'nestjs-typeorm-paginate';
 import { splitUrls } from 'src/util/utils';
+import {
+  ActivityDto,
+  HealthDataDto,
+  UpdateClientDto,
+} from 'src/dtos/client-dtos';
 
 @Injectable()
 export class ClientService {
@@ -65,7 +70,7 @@ export class ClientService {
     try {
       client = await this.clientRepository.getById(id);
     } catch (error) {
-      this.logger.log('Error capturado en getClientById:', error);
+      //this.logger.log('Error capturado en getClientById:', error);
       await this.auditorityRepository.create(
         'Error al obtener un cliente por id',
         error.message,
@@ -79,14 +84,20 @@ export class ClientService {
     return client;
   }
 
-  async getAllClients(page: number, search?: string): Promise<Pagination<ClientEntity>> {
+  async getAllClients(
+    page: number,
+    search?: string,
+  ): Promise<Pagination<ClientEntity>> {
     try {
-      let value = await this.clientRepository.getAll({
-        page: page,
-        limit: 20,
-      }, search);
-      this.logger.log('value', value);
-      return value
+      let value = await this.clientRepository.getAll(
+        {
+          page: page,
+          limit: 20,
+        },
+        search,
+      );
+      //this.logger.log('value', value);
+      return value;
     } catch (error) {
       await this.auditorityRepository.create(
         'Error al obtener todos los clientes',
@@ -96,18 +107,105 @@ export class ClientService {
     }
   }
 
-  async updateClient(id: string, client: ClientEntity): Promise<ClientEntity> {
+  async updateClient(
+    id: string,
+    dto: UpdateClientDto,
+  ): Promise<ClientEntity | null> {
     try {
-      const alreadyExistClientWithDni: boolean =
-        await this.clientRepository.existsClientByDni(client.dni);
-      if (alreadyExistClientWithDni) {
-        return await this.clientRepository.update(id, client);
-      } else {
-        throw new NotFoundException(MessagesErrors.CLIENT_NOT_FOUND);
-      }
+      const client = await this.getClientById(id);
+      if (!client) throw new NotFoundException(MessagesErrors.CLIENT_NOT_FOUND);
+
+      this.mapClientBasics(client, dto);
+      this.mapClientActivities(client, dto.activities);
+      this.mapClientHealthData(client, dto.healthData);
+
+      return await this.clientRepository.create(client);
     } catch (error) {
+      await this.auditorityRepository.create(
+        'Error al actualizar un cliente',
+        error.message,
+      );
       throw new ServerErrorException(MessagesErrors.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private mapClientBasics(client: ClientEntity, dto: UpdateClientDto): void {
+    Object.assign(client, {
+      name: dto.name,
+      lastName: dto.lastName,
+      dni: dto.dni,
+      age: dto.age,
+      gender: dto.gender,
+      email: dto.email,
+      phone: dto.phone,
+      photo: dto.photo,
+      birthDate: dto.birthDate,
+      isActive: dto.isActive,
+      isInsured: dto.isInsured,
+    });
+  }
+
+  private mapClientActivities(
+    client: ClientEntity,
+    activities: ActivityDto[] = [],
+  ): void {
+    if (activities.length === 0) {
+      // Si el arreglo es vacío, elimina todas las actividades relacionadas
+      client.activities = [];
+      return;
+    }
+
+    const incomingIds = new Set(
+      activities.filter((a) => a.id).map((a) => a.id),
+    );
+
+    // Mantén solo las actividades existentes que están en el arreglo entrante
+    client.activities = client.activities.filter((a) => incomingIds.has(a.id));
+
+    activities.forEach((activity) => {
+      const existing = activity.id
+        ? client.activities.find((a) => a.id === activity.id)
+        : null;
+
+      if (existing) {
+        // Actualiza las actividades existentes
+        Object.assign(existing, {
+          activityName: activity.activityName,
+          attendedLocation: activity.attendedLocation,
+          attendedDays: activity.attendedDays,
+          goal: activity.goal,
+        });
+      } else {
+        // Crea nuevas actividades
+        const newActivity = new ActivityEntity();
+        Object.assign(newActivity, {
+          activityName: activity.activityName,
+          attendedLocation: activity.attendedLocation,
+          attendedDays: activity.attendedDays,
+          goal: activity.goal,
+        });
+        client.activities.push(newActivity);
+      }
+    });
+  }
+
+  private mapClientHealthData(
+    client: ClientEntity,
+    healthData: HealthDataDto,
+  ): void {
+    Object.assign(client.healthData, {
+      healthInsurance: healthData.healthInsurance,
+      weight: healthData.weight,
+      height: healthData.height,
+      currentStudies: healthData.currentStudies,
+      studyImages: healthData.studyImages,
+      bloodPressure: healthData.bloodPressure,
+      diseases: healthData.diseases,
+      medications: healthData.medications,
+      boneIssues: healthData.boneIssues,
+      smoker: healthData.smoker,
+      client,
+    });
   }
 
   async deleteClient(ids: string[]): Promise<boolean> {

@@ -31,7 +31,7 @@ export class ClientEntity {
     phone: string;
 
     @Column('varchar', { nullable: true })
-    photo: string;
+    photo?: string;
 
     @Column('varchar', { nullable: false, name: "birth_date" })
     birthDate: string;
@@ -45,7 +45,7 @@ export class ClientEntity {
     @Column('boolean', { nullable: false, name: "is_insured" })
     isInsured: boolean;
 
-    @OneToMany(() => ActivityEntity, (activity) => activity.client, {cascade: true})
+    @OneToMany(() => ActivityEntity, (activity) => activity.client, {cascade: true, orphanedRowAction: 'delete'})
     activities: ActivityEntity[];
 
     @OneToOne(() => HealthDataEntity, (health_data) => health_data.client,  {cascade: true})

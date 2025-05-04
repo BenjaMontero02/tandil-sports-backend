@@ -48,20 +48,6 @@ export class ClientRepository {
     });
   }
 
-  async update(id: string, item: ClientEntity): Promise<ClientEntity> {
-    try {
-      const existingClient = await this.repository.findOne({ where: { id } });
-      const updatedClient = Object.assign(existingClient!, item);
-      return await this.repository.save(updatedClient);
-    } catch (error) {
-      this.auditorityRepository.create(
-        'Error al actualizar el cliente',
-        error.message,
-      );
-      return Promise.reject();
-    }
-  }
-
   async delete(ids: string[]): Promise<boolean> {
     const queryRunner = this.dataSource.createQueryRunner(); // Inicializamos el QueryRunner
     await queryRunner.connect();

@@ -14,6 +14,8 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  ParseUUIDPipe,
+  Patch,
 } from '@nestjs/common';
 import { ClientService } from 'src/service/client/client.service';
 import { ClientEntity } from 'src/repository/client/client.entity';
@@ -21,6 +23,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import * as XLSX from 'xlsx';
 import { Multer } from 'multer';
 import { Pagination } from 'nestjs-typeorm-paginate';
+import { UpdateClientDto } from 'src/dtos/client-dtos';
 
 @Controller('clients')
 export class ClientController {
@@ -28,7 +31,9 @@ export class ClientController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async getById(@Param('id') id: string): Promise<ClientEntity | null> {
+  async getById(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<ClientEntity | null> {
     // await new Promise((resolve) => setTimeout(resolve, 3000)); // Simular un retraso de 1 segundo
     return await this.clientService.getClientById(id);
   }
@@ -49,13 +54,12 @@ export class ClientController {
     return await this.clientService.createClient(client);
   }
 
-  @Put(':id')
-  @HttpCode(HttpStatus.OK)
-  async update(
-    @Param('id') id: string,
-    @Body() client: ClientEntity,
+  @Patch(':id')
+  update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() client: UpdateClientDto,
   ): Promise<ClientEntity | null> {
-    return await this.clientService.updateClient(id, client);
+    return this.clientService.updateClient(id, client);
   }
 
   @Delete()
