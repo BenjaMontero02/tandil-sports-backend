@@ -68,6 +68,12 @@ export class ClientController {
     await this.clientService.deleteClient(ids);
   }
 
+  @Post()
+  @HttpCode(HttpStatus.OK)
+  async generetedCredential(@Body('ids') ids: string[]): Promise<{ base64: string; filename: string }[]> {
+    await this.clientService.generetedCredential(ids);
+  }
+
   @Post('excel')
   @UseInterceptors(FileInterceptor('file'))
   @Bind(UploadedFile())

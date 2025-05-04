@@ -23,15 +23,28 @@ import {
   HealthDataDto,
   UpdateClientDto,
 } from 'src/dtos/client-dtos';
+import { generateCredential } from '../pdf.generator/pdf-generator';
 
 @Injectable()
 export class ClientService {
   private readonly logger = new Logger(ClientService.name); // instanciar el logger
-
+  
   constructor(
     private readonly clientRepository: ClientRepository,
     private readonly auditorityRepository: AuditorityRepository,
   ) {}
+  
+  async generetedCredential(ids: string[]): Promise<{ base64: string; filename: string }[]> {
+    let credentials = [];
+    for (const id of ids) {
+      let client = await this.clientRepository.getById(id);
+      if(client){
+        let file = await generateCredential(client.name, client.dni, client.photo)
+        credentials.push(file);
+      }
+    }
+    return credentials;
+  }
 
   async createClient(client: ClientEntity): Promise<ClientEntity> {
     //si no existe devuelve false
